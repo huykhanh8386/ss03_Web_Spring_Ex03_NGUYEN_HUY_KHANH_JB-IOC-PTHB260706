@@ -1,0 +1,63 @@
+package com.example.session03.Controller;
+
+import com.example.session03.Models.Entities.Enrollment;
+import com.example.session03.Models.Responses.ApiResponse;
+import com.example.session03.Models.Services.EnrollmentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v3/enrollment")
+public class EnrollmentController {
+    private final EnrollmentService enrollmentService;
+    public ResponseEntity<?> findAll() {
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Lấy danh sách đăng ký thành công", enrollmentService.findAll()));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> findById(
+            @PathVariable int id
+    ) {
+        Enrollment enrollment = enrollmentService.getEnrollmentById(id);
+        if (enrollment == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, "Không tìm thấy đăng ký", null));
+        }
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy đăng ký thành công", enrollment));
+    }
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody Enrollment enrollment) {
+        if (enrollment.getStudentName() == null
+                || enrollment.getStudentName().isBlank()
+                || enrollment.getCourseId() <= 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, "Dữ liệu không hợp lệ", null));
+        }
+        Enrollment result = enrollmentService.createEnrollment(enrollment);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, "ID đã tồn tại",null));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, "tạo đăng ký thành công", result));
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable int id, @RequestBody Enrollment enrollment) {
+        if (enrollment.getStudentName() == null
+                || enrollment.getStudentName().isBlank()
+                || enrollment.getCourseId() <= 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, "Dữ liệu không hợp lệ", null));
+        }
+        Enrollment result = enrollmentService.updateEnrollment(id, enrollment);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, "Không tìm thấy đăng ký", null));
+        }
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật đăng ký thành công", result));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable int id) {
+        Enrollment result = enrollmentService.deleteEnrollmentById(id);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, "Không tìm thấy đăng ký", null));
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Xóa đăng ký thành công", result));
+    }
+}
